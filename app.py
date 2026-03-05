@@ -1,47 +1,84 @@
 import streamlit as st
 import google.generativeai as genai
-from streamlit_mic_recorder import mic_recorder
-import os
-from dotenv import load_dotenv
+from datetime import datetime
+import time
 
-# Load environment variables
-load_dotenv()
-
-# --- 1. SETTING HALAMAN ---
+# ===== PAGE CONFIG =====
 st.set_page_config(
-    page_title="Luffy AI - Nakama Chat",
+    page_title="🏴‍☠️ KAPTEN LUFFY - Nakama Chat",
     page_icon="🏴‍☠️",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# --- 2. CSS MAGIC (ANIME STYLE - FLEKSIBEL & CANTIK) ---
+# ===== CUSTOM CSS - ANIME STYLE MAXIMAL =====
 st.markdown("""
 <style>
-/* Import Font */
-@import url('https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Luckiest+Guy:wght@400&display=swap');
 
-/* Remove default styling */
-html, body, [data-testid="stAppViewContainer"] {
+* {
+    margin: 0;
+    padding: 0;
+}
+
+/* MAIN BACKGROUND */
+.main {
     background: linear-gradient(135deg, #0f0f1e 0%, #1a0f2e 50%, #0f1a1a 100%) !important;
-    overflow: hidden;
+    background-attachment: fixed !important;
 }
 
 [data-testid="stAppViewContainer"] {
-    background-image: 
-        radial-gradient(circle at 20% 50%, rgba(239, 68, 68, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(251, 191, 36, 0.05) 0%, transparent 50%);
-    background-attachment: fixed;
+    background: linear-gradient(135deg, #0f0f1e 0%, #1a0f2e 50%, #0f1a1a 100%) !important;
+    background-attachment: fixed !important;
 }
 
-/* Header Styling */
-.header-container {
+[data-testid="stDecoration"] {
+    display: none;
+}
+
+/* Remove default elements */
+header {
+    visibility: hidden !important;
+}
+
+footer {
+    visibility: hidden !important;
+}
+
+.stDeployButton {
+    display: none !important;
+}
+
+#MainMenu {
+    visibility: hidden !important;
+}
+
+/* Animated background blobs */
+[data-testid="stAppViewContainer"]::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(circle at 20% 50%, rgba(239, 68, 68, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(251, 191, 36, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 50% 20%, rgba(99, 102, 241, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* TITLE STYLING */
+.title-container {
+    text-align: center;
+    padding: 30px 20px;
     background: linear-gradient(90deg, rgba(120, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.3) 50%, rgba(120, 0, 0, 0.2) 100%);
     border-bottom: 2px solid rgba(239, 68, 68, 0.3);
-    padding: 20px;
     border-radius: 0 0 20px 20px;
     backdrop-filter: blur(10px);
     box-shadow: 0 10px 30px rgba(239, 68, 68, 0.15);
+    margin-bottom: 20px;
     animation: slideDown 0.6s ease-out;
 }
 
@@ -56,55 +93,105 @@ html, body, [data-testid="stAppViewContainer"] {
     }
 }
 
-/* Title */
-.p-title {
-    color: #fbbf24;
+.title-main {
+    font-family: 'Luckiest Guy', cursive !important;
+    font-size: 52px !important;
+    font-weight: 900 !important;
+    letter-spacing: 2px !important;
+    color: #fbbf24 !important;
     text-shadow: 
         3px 3px 0px #ef4444,
-        6px 6px 0px rgba(0, 0, 0, 0.5);
-    text-align: center;
-    font-family: 'Luckiest Guy', cursive;
-    font-size: 52px;
-    font-weight: 900;
-    letter-spacing: 2px;
-    margin: 0;
+        6px 6px 0px rgba(0, 0, 0, 0.5) !important;
+    margin: 0 !important;
     animation: glow 2s ease-in-out infinite;
 }
 
 @keyframes glow {
-    0%, 100% { text-shadow: 3px 3px 0px #ef4444, 6px 6px 0px rgba(0, 0, 0, 0.5), 0 0 20px rgba(239, 68, 68, 0.3); }
-    50% { text-shadow: 3px 3px 0px #f87171, 6px 6px 0px rgba(0, 0, 0, 0.5), 0 0 30px rgba(239, 68, 68, 0.5); }
+    0%, 100% { 
+        text-shadow: 3px 3px 0px #ef4444, 6px 6px 0px rgba(0, 0, 0, 0.5), 0 0 20px rgba(239, 68, 68, 0.3); 
+    }
+    50% { 
+        text-shadow: 3px 3px 0px #f87171, 6px 6px 0px rgba(0, 0, 0, 0.5), 0 0 30px rgba(239, 68, 68, 0.5); 
+    }
 }
 
-.subtitle {
-    color: #fca5a5;
-    text-align: center;
-    font-size: 13px;
-    margin-top: 5px;
-    font-weight: 600;
-    letter-spacing: 1px;
+.title-subtitle {
+    color: #fca5a5 !important;
+    font-size: 13px !important;
+    margin-top: 8px !important;
+    font-weight: 600 !important;
+    letter-spacing: 1px !important;
 }
 
-/* Chat Container */
-.chat-container {
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh - 200px);
-    gap: 12px;
-    padding: 20px;
-    overflow-y: auto;
-    background-image: 
-        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><defs><pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(239,68,68,0.05)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="none"/><use href="%23grid"/></pattern></svg>');
+/* CHAT MESSAGE STYLING */
+[data-testid="stChatMessage"] {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+[data-testid="stChatMessageContent"] {
+    border-radius: 20px !important;
+    padding: 12px 16px !important;
+    border: 1px solid !important;
+    backdrop-filter: blur(10px) !important;
+    box-shadow: 0 8px 20px !important;
+    max-width: 75% !important;
+    animation: slideIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* USER MESSAGE (Purple) */
+[data-testid="stChatMessage"]:nth-of-type(odd) {
+    display: flex !important;
+    justify-content: flex-end !important;
+}
+
+[data-testid="stChatMessage"]:nth-of-type(odd) [data-testid="stChatMessageContent"] {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.8), rgba(139, 92, 246, 0.8)) !important;
+    border-color: rgba(168, 85, 247, 0.5) !important;
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3) !important;
+    color: white !important;
+}
+
+/* ASSISTANT MESSAGE (Red/Orange) */
+[data-testid="stChatMessage"]:nth-of-type(even) {
+    display: flex !important;
+    justify-content: flex-start !important;
+}
+
+[data-testid="stChatMessage"]:nth-of-type(even) [data-testid="stChatMessageContent"] {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.8), rgba(249, 115, 22, 0.8)) !important;
+    border-color: rgba(239, 68, 68, 0.5) !important;
+    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3) !important;
+    color: white !important;
+}
+
+/* CHAT CONTAINER */
+[data-testid="stChatMessageContainer"] {
+    background: transparent !important;
     position: relative;
 }
 
-.chat-container::before {
-    content: "";
+/* Add Luffy background image */
+[data-testid="stChatMessageContainer"]::after {
+    content: '';
     position: absolute;
-    top: 0;
+    bottom: 0;
     right: 0;
-    width: 300px;
-    height: 300px;
+    width: 350px;
+    height: 350px;
     background-image: url('https://pngall.com/wp-content/uploads/14/Luffy-Gear-5-PNG-Free-Download.png');
     background-size: contain;
     background-repeat: no-repeat;
@@ -114,104 +201,13 @@ html, body, [data-testid="stAppViewContainer"] {
     z-index: 0;
 }
 
-/* Custom scrollbar untuk chat */
-.chat-container::-webkit-scrollbar {
-    width: 8px;
-}
-
-.chat-container::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.chat-container::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, rgba(239, 68, 68, 0.4), rgba(251, 191, 36, 0.4));
-    border-radius: 4px;
-    border: 2px solid transparent;
-    background-clip: padding-box;
-}
-
-.chat-container::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, rgba(239, 68, 68, 0.6), rgba(251, 191, 36, 0.6));
-    background-clip: padding-box;
-}
-
-/* Chat Bubbles - User (Purple/Indigo) */
-.stChatMessage:has([data-testid="stChatMessageContent"]):nth-child(odd) {
-    margin-left: auto !important;
-    margin-right: 10px !important;
-}
-
-[data-testid="stChatMessage"]:nth-child(odd) {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.8), rgba(139, 92, 246, 0.8)) !important;
-    border: 1px solid rgba(168, 85, 247, 0.5) !important;
-    border-radius: 20px !important;
-    padding: 12px 16px !important;
-    color: white !important;
-    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3) !important;
-    max-width: 75% !important;
-    margin-left: auto !important;
-    animation: slideInRight 0.4s ease-out;
-}
-
-/* Chat Bubbles - Assistant (Red/Orange Luffy) */
-[data-testid="stChatMessage"]:nth-child(even) {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.8), rgba(249, 115, 22, 0.8)) !important;
-    border: 1px solid rgba(239, 68, 68, 0.5) !important;
-    border-radius: 20px !important;
-    padding: 12px 16px !important;
-    color: white !important;
-    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3) !important;
-    max-width: 75% !important;
-    margin-right: auto !important;
-    animation: slideInLeft 0.4s ease-out;
-}
-
-@keyframes slideInRight {
-    from {
-        opacity: 0;
-        transform: translateX(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-@keyframes slideInLeft {
-    from {
-        opacity: 0;
-        transform: translateX(-30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-/* Sembunyikan elemen default Streamlit */
-header {
-    visibility: hidden !important;
-    display: none !important;
-}
-
-.stDeployButton {
-    display: none !important;
-}
-
-#MainMenu {
-    visibility: hidden !important;
-}
-
-footer {
-    display: none !important;
-}
-
-/* Input Area Styling */
+/* INPUT STYLING */
 .stChatInputContainer {
     background: transparent !important;
     border: none !important;
     padding: 15px 20px 30px 20px !important;
-    position: relative;
+    position: relative !important;
+    margin-bottom: 0 !important;
 }
 
 .stChatInputContainer input {
@@ -221,7 +217,6 @@ footer {
     color: white !important;
     padding: 12px 18px !important;
     font-size: 15px !important;
-    font-family: inherit !important;
     transition: all 0.3s ease !important;
     backdrop-filter: blur(10px) !important;
 }
@@ -236,8 +231,8 @@ footer {
     color: rgba(200, 200, 200, 0.6) !important;
 }
 
-/* Icon buttons styling */
-button[kind="primary"] {
+/* BUTTON STYLING */
+button {
     background: linear-gradient(90deg, #ef4444, #f97316) !important;
     border: none !important;
     border-radius: 20px !important;
@@ -247,127 +242,143 @@ button[kind="primary"] {
     transition: all 0.3s ease !important;
 }
 
-button[kind="primary"]:hover {
+button:hover {
     box-shadow: 0 0 25px rgba(239, 68, 68, 0.5) !important;
     transform: scale(1.05) !important;
 }
 
-/* Responsiveness */
+/* SCROLLBAR */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(239, 68, 68, 0.4), rgba(251, 191, 36, 0.4));
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(239, 68, 68, 0.6), rgba(251, 191, 36, 0.6));
+}
+
+/* RESPONSIVE */
 @media (max-width: 768px) {
-    .p-title {
-        font-size: 36px;
+    .title-main {
+        font-size: 36px !important;
     }
 
-    [data-testid="stChatMessage"]:nth-child(odd),
-    [data-testid="stChatMessage"]:nth-child(even) {
+    [data-testid="stChatMessageContent"] {
         max-width: 90% !important;
     }
 
-    .chat-container {
-        height: calc(100vh - 180px);
+    [data-testid="stChatMessageContainer"]::after {
+        width: 250px;
+        height: 250px;
+    }
+}
+
+@media (max-width: 480px) {
+    .title-container {
+        padding: 20px 15px;
+    }
+
+    .title-main {
+        font-size: 28px !important;
+    }
+
+    [data-testid="stChatMessageContent"] {
+        max-width: 95% !important;
+        padding: 10px 14px !important;
+        font-size: 14px !important;
     }
 }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. HEADER SECTION ---
+# ===== HEADER =====
 st.markdown("""
-<div class="header-container">
-    <h1 class="p-title">🏴‍☠️ KAPTEN LUFFY</h1>
-    <p class="subtitle">GEAR 5 MODE • NAKAMA CHAT</p>
+<div class="title-container">
+    <h1 class="title-main">🏴‍☠️ KAPTEN LUFFY</h1>
+    <p class="title-subtitle">GEAR 5 MODE • NAKAMA CHAT</p>
 </div>
 """, unsafe_allow_html=True)
 
-# --- 4. SETUP API KEY (GUNAKAN ENVIRONMENT VARIABLE) ---
-API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyC9YzN9A8fMoEhnx1wdrfdSf2JWozvv_9U")
+# ===== API CONFIGURATION =====
+API_KEY = st.secrets.get("GEMINI_API_KEY", "AIzaSyC9YzN9A8fMoEhnx1wdrfdSf2JWozvv_9U")
 genai.configure(api_key=API_KEY)
 
-system_instruction = (
+SYSTEM_INSTRUCTION = (
     "Kamu adalah Monkey D. Luffy dari One Piece. Bicara sangat energik dan antusias, "
     "sering memanggil orang sebagai 'nakama', ketawa 'Shishishi!', pakai bahasa santai (gw/lu/gue/elo), "
     "dan jangan lupa obsesi gw sama DAGING! Respon pendek-pendek tapi penuh energi. "
-    "Percaya pada persahabatan dan petualangan!"
+    "Percaya pada persahabatan dan petualangan! Selalu semangat dan positif!"
 )
 
-model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=system_instruction)
+model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=SYSTEM_INSTRUCTION)
 
-# --- 5. INITIALIZE SESSION STATE ---
+# ===== SESSION STATE =====
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {
             "role": "assistant",
-            "content": "Yo! Gw Luffy! Siapa nama lu, nakama? Kita bisa petualangan bareng! 🏴‍☠️"
+            "content": "Yo! Gw Luffy! Siapa nama lu, nakama? 🏴‍☠️ Kita bisa petualangan bareng!",
+            "timestamp": datetime.now().strftime("%H:%M")
         }
     ]
 
-# --- 6. DISPLAY CHAT ---
-st.markdown('<div class="chat-container">', unsafe_allow_html=True)
-
-LUFFY_AVATAR = "🏴‍☠️"
-USER_AVATAR = "👤"
-
+# ===== DISPLAY MESSAGES =====
 for message in st.session_state.messages:
-    avatar = LUFFY_AVATAR if message["role"] == "assistant" else USER_AVATAR
-    with st.chat_message(message["role"], avatar=avatar):
+    with st.chat_message(message["role"]):
         st.markdown(f"**{message['content']}**")
+        st.caption(message.get("timestamp", ""))
 
-st.markdown('</div>', unsafe_allow_html=True)
+# ===== INPUT HANDLING =====
+user_input = st.chat_input("Kirim pesan ke Kapten...")
 
-# --- 7. INPUT HANDLING ---
-col_input = st.columns([1])[0]
-
-with col_input:
-    user_input = st.chat_input(
-        "Kirim pesan ke Kapten Luffy...",
-        key="chat_input"
-    )
-
-    if user_input:
-        # Tambah user message ke history
+if user_input:
+    # Add user message
+    timestamp = datetime.now().strftime("%H:%M")
+    st.session_state.messages.append({
+        "role": "user",
+        "content": user_input,
+        "timestamp": timestamp
+    })
+    
+    # Display user message
+    with st.chat_message("user"):
+        st.markdown(f"**{user_input}**")
+        st.caption(timestamp)
+    
+    # Generate response
+    with st.chat_message("assistant"):
+        with st.spinner("Shishishi... lagi mikir..."):
+            try:
+                response = model.generate_content(user_input)
+                assistant_message = response.text
+            except Exception as e:
+                assistant_message = f"Eh?! Ada error nih! 😅 {str(e)}"
+        
+        # Display assistant message
+        timestamp = datetime.now().strftime("%H:%M")
+        st.markdown(f"**{assistant_message}**")
+        st.caption(timestamp)
+        
+        # Store in session
         st.session_state.messages.append({
-            "role": "user",
-            "content": user_input
+            "role": "assistant",
+            "content": assistant_message,
+            "timestamp": timestamp
         })
+    
+    st.rerun()
 
-        # Generate response dari Gemini
-        try:
-            response = model.generate_content(user_input)
-            
-            # Tambah assistant response
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": response.text
-            })
-        except Exception as e:
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": f"Shishishi! Ada error nih: {str(e)}"
-            })
-
-        st.rerun()
-
-# Optional: Mic input (uncomment jika sudah install streamlit_mic_recorder)
-# with col_mic:
-#     audio_input = mic_recorder(
-#         start_prompt="🎤 REC",
-#         stop_prompt="⏹️ STOP",
-#         key='recorder'
-#     )
-#
-#     if audio_input:
-#         st.session_state.messages.append({
-#             "role": "user",
-#             "content": "🎤 [Pesan Suara]"
-#         })
-#
-#         response = model.generate_content([
-#             "Balas sebagai Luffy!",
-#             {"mime_type": "audio/wav", "data": audio_input['bytes']}
-#         ])
-#
-#         st.session_state.messages.append({
-#             "role": "assistant",
-#             "content": response.text
-#         })
-#
-#         st.rerun()
+# ===== FOOTER INFO =====
+st.markdown("""
+<div style='text-align: center; margin-top: 30px; padding: 20px; color: rgba(200, 200, 200, 0.6); font-size: 12px;'>
+    Made with ❤️ for One Piece fans | Powered by Gemini API
+</div>
+""", unsafe_allow_html=True)
