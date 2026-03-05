@@ -210,10 +210,10 @@ footer { visibility: hidden !important; }
     background: linear-gradient(to top, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.2));
     border-top: 1px solid rgba(239, 68, 68, 0.2);
     width: 100%;
-    gap: clamp(8px, 2vw, 12px) !important;
-    display: flex !important;
-    align-items: flex-end !important;
-    justify-content: center !important;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: clamp(8px, 2vw, 12px);
 }
 
 .stChatInputContainer {
@@ -305,7 +305,7 @@ button:hover {
     }
 
     .input-section {
-        gap: clamp(6px, 1.5vw, 10px) !important;
+        gap: clamp(6px, 1.5vw, 10px);
     }
 
     button {
@@ -431,4 +431,5 @@ elif user_input:
             st.rerun()
         except Exception as e:
             st.error(f"Eh?! Ada error: {str(e)}")
-            st.session_state.messages.pop()
+            if st.session_state.messages:
+                st.session_state.messages.pop()
