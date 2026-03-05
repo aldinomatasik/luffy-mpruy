@@ -16,20 +16,24 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Luckiest+Guy:wght@400&display=swap');
 
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
 * {
     margin: 0;
     padding: 0;
 }
 
 /* MAIN BACKGROUND */
-.main {
-    background: linear-gradient(135deg, #0f0f1e 0%, #1a0f2e 50%, #0f1a1a 100%) !important;
-    background-attachment: fixed !important;
-}
-
 [data-testid="stAppViewContainer"] {
     background: linear-gradient(135deg, #0f0f1e 0%, #1a0f2e 50%, #0f1a1a 100%) !important;
     background-attachment: fixed !important;
+    height: 100vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
 }
 
 [data-testid="stDecoration"] {
@@ -205,13 +209,13 @@ footer {
     z-index: 0;
 }
 
-/* INPUT STYLING */
+/* INPUT STYLING - HORIZONTAL LAYOUT */
 .stChatInputContainer {
     background: transparent !important;
     border: none !important;
-    padding: 15px 20px 30px 20px !important;
-    position: relative !important;
-    margin-bottom: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
 }
 
 .stChatInputContainer input {
@@ -223,6 +227,7 @@ footer {
     font-size: 15px !important;
     transition: all 0.3s ease !important;
     backdrop-filter: blur(10px) !important;
+    width: 100% !important;
 }
 
 .stChatInputContainer input:focus {
@@ -235,6 +240,25 @@ footer {
     color: rgba(200, 200, 200, 0.6) !important;
 }
 
+/* COLUMNS LAYOUT */
+[data-testid="stHorizontalBlock"] {
+    gap: 12px !important;
+    align-items: flex-end !important;
+}
+
+[data-testid="stColumn"] {
+    padding: 0 !important;
+}
+
+[data-testid="stColumn"]:first-child {
+    flex: 0 0 auto !important;
+    width: auto !important;
+}
+
+[data-testid="stColumn"]:last-child {
+    flex: 1 !important;
+}
+
 /* BUTTON STYLING */
 button {
     background: linear-gradient(90deg, #ef4444, #f97316) !important;
@@ -242,8 +266,10 @@ button {
     border-radius: 20px !important;
     color: white !important;
     font-weight: 600 !important;
-    padding: 10px 20px !important;
+    padding: 12px 16px !important;
     transition: all 0.3s ease !important;
+    height: auto !important;
+    min-height: 44px !important;
 }
 
 button:hover {
@@ -305,6 +331,31 @@ button:hover {
         height: 200px;
     }
 }
+
+/* LAYOUT WRAPPER */
+[data-testid="stVerticalBlockBorderWrapper"] {
+    flex: 1;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+/* Main content area scrollable */
+.main {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+/* Input section FIXED */
+.input-section {
+    flex-shrink: 0;
+    padding: 15px 20px 30px 20px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0));
+    border-top: 1px solid rgba(239, 68, 68, 0.2);
+    position: sticky;
+    bottom: 0;
+    z-index: 100;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -343,8 +394,13 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(f"**{message['content']}**")
 
-# ===== INPUT SECTION =====
-col_mic, col_text = st.columns([1, 5])
+# ===== SPACER UNTUK LAYOUT =====
+st.write("")
+
+# ===== INPUT SECTION - FIXED BOTTOM =====
+st.markdown('<div class="input-section">', unsafe_allow_html=True)
+
+col_mic, col_input, col_btn = st.columns([0.8, 1, 0.8], gap="small")
 
 with col_mic:
     audio_input = mic_recorder(
@@ -354,8 +410,10 @@ with col_mic:
         use_container_width=True
     )
 
-with col_text:
+with col_input:
     user_input = st.chat_input("Kirim pesan ke Kapten...")
+
+st.markdown('</div>', unsafe_allow_html=True)
 
 # ===== HANDLE VOICE INPUT =====
 if audio_input:
@@ -400,10 +458,3 @@ elif user_input:
         except Exception as e:
             st.error(f"Eh?! Ada error: {str(e)}")
             st.session_state.messages.pop()
-
-# ===== FOOTER =====
-st.markdown("""
-<div style='text-align: center; margin-top: 30px; padding: 20px; color: rgba(200, 200, 200, 0.6); font-size: 11px;'>
-    Made with ❤️ for One Piece fans | Powered by Gemini API
-</div>
-""", unsafe_allow_html=True)
