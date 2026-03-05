@@ -90,8 +90,8 @@ st.markdown(f"""
 st.markdown('<h1 class="p-title">🍖 KAPTEN LUFFY AI 🏴‍☠️</h1>', unsafe_allow_html=True)
 
 # --- 4. KONFIGURASI API GEMINI (Jangan Lupa Diisi!) ---
-API_KEY = "MASUKKAN_API_KEY_GEMINI_KAMU" 
-if API_KEY == "MASUKKAN_API_KEY_GEMINI_KAMU":
+API_KEY = "AIzaSyC9YzN9A8fMoEhnx1wdrfdSf2JWozvv_9U" 
+if API_KEY == "AIzaSyC9YzN9A8fMoEhnx1wdrfdSf2JWozvv_9U":
     st.error("Woi Nakama! API Key Gemini-nya belum diisi di kode! Shishishi!")
     st.stop()
 genai.configure(api_key=API_KEY)
