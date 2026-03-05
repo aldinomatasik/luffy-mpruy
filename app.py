@@ -1,13 +1,13 @@
 import streamlit as st
 import google.generativeai as genai
+from streamlit_mic_recorder import mic_recorder
 from datetime import datetime
-import time
 
 # ===== PAGE CONFIG =====
 st.set_page_config(
     page_title="🏴‍☠️ KAPTEN LUFFY - Nakama Chat",
     page_icon="🏴‍☠️",
-    layout="wide",
+    layout="centered",
     initial_sidebar_state="collapsed"
 )
 
@@ -33,7 +33,7 @@ st.markdown("""
 }
 
 [data-testid="stDecoration"] {
-    display: none;
+    display: none !important;
 }
 
 /* Remove default elements */
@@ -128,7 +128,7 @@ footer {
     background: transparent !important;
     border: none !important;
     padding: 0 !important;
-    margin: 0 !important;
+    margin: 8px 0 !important;
 }
 
 [data-testid="stChatMessageContent"] {
@@ -137,8 +137,8 @@ footer {
     border: 1px solid !important;
     backdrop-filter: blur(10px) !important;
     box-shadow: 0 8px 20px !important;
-    max-width: 75% !important;
     animation: slideIn 0.4s ease-out;
+    word-wrap: break-word !important;
 }
 
 @keyframes slideIn {
@@ -154,8 +154,8 @@ footer {
 
 /* USER MESSAGE (Purple) */
 [data-testid="stChatMessage"]:nth-of-type(odd) {
-    display: flex !important;
-    justify-content: flex-end !important;
+    text-align: right !important;
+    margin-right: 0 !important;
 }
 
 [data-testid="stChatMessage"]:nth-of-type(odd) [data-testid="stChatMessageContent"] {
@@ -163,12 +163,14 @@ footer {
     border-color: rgba(168, 85, 247, 0.5) !important;
     box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3) !important;
     color: white !important;
+    display: inline-block !important;
+    max-width: 85% !important;
 }
 
 /* ASSISTANT MESSAGE (Red/Orange) */
 [data-testid="stChatMessage"]:nth-of-type(even) {
-    display: flex !important;
-    justify-content: flex-start !important;
+    text-align: left !important;
+    margin-left: 0 !important;
 }
 
 [data-testid="stChatMessage"]:nth-of-type(even) [data-testid="stChatMessageContent"] {
@@ -176,6 +178,8 @@ footer {
     border-color: rgba(239, 68, 68, 0.5) !important;
     box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3) !important;
     color: white !important;
+    display: inline-block !important;
+    max-width: 85% !important;
 }
 
 /* CHAT CONTAINER */
@@ -196,7 +200,7 @@ footer {
     background-size: contain;
     background-repeat: no-repeat;
     background-position: bottom right;
-    opacity: 0.15;
+    opacity: 0.12;
     pointer-events: none;
     z-index: 0;
 }
@@ -295,6 +299,11 @@ button:hover {
         padding: 10px 14px !important;
         font-size: 14px !important;
     }
+
+    [data-testid="stChatMessageContainer"]::after {
+        width: 200px;
+        height: 200px;
+    }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -325,8 +334,7 @@ if "messages" not in st.session_state:
     st.session_state.messages = [
         {
             "role": "assistant",
-            "content": "Yo! Gw Luffy! Siapa nama lu, nakama? 🏴‍☠️ Kita bisa petualangan bareng!",
-            "timestamp": datetime.now().strftime("%H:%M")
+            "content": "Yo! Gw Luffy! Siapa nama lu, nakama? 🏴‍☠️ Kita bisa petualangan bareng!"
         }
     ]
 
@@ -334,51 +342,68 @@ if "messages" not in st.session_state:
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(f"**{message['content']}**")
-        st.caption(message.get("timestamp", ""))
 
-# ===== INPUT HANDLING =====
-user_input = st.chat_input("Kirim pesan ke Kapten...")
+# ===== INPUT SECTION =====
+col_mic, col_text = st.columns([1, 5])
 
-if user_input:
-    # Add user message
-    timestamp = datetime.now().strftime("%H:%M")
-    st.session_state.messages.append({
-        "role": "user",
-        "content": user_input,
-        "timestamp": timestamp
-    })
-    
-    # Display user message
-    with st.chat_message("user"):
-        st.markdown(f"**{user_input}**")
-        st.caption(timestamp)
-    
-    # Generate response
-    with st.chat_message("assistant"):
-        with st.spinner("Shishishi... lagi mikir..."):
-            try:
-                response = model.generate_content(user_input)
-                assistant_message = response.text
-            except Exception as e:
-                assistant_message = f"Eh?! Ada error nih! 😅 {str(e)}"
-        
-        # Display assistant message
-        timestamp = datetime.now().strftime("%H:%M")
-        st.markdown(f"**{assistant_message}**")
-        st.caption(timestamp)
-        
-        # Store in session
-        st.session_state.messages.append({
-            "role": "assistant",
-            "content": assistant_message,
-            "timestamp": timestamp
-        })
-    
-    st.rerun()
+with col_mic:
+    audio_input = mic_recorder(
+        start_prompt="🎤",
+        stop_prompt="🍖",
+        key='recorder',
+        use_container_width=True
+    )
 
-# ===== FOOTER INFO =====
+with col_text:
+    user_input = st.chat_input("Kirim pesan ke Kapten...")
+
+# ===== HANDLE VOICE INPUT =====
+if audio_input:
+    with st.spinner("Shishishi... lagi dengar..."):
+        try:
+            st.session_state.messages.append({
+                "role": "user",
+                "content": "🎤 [Pesan Suara]"
+            })
+            
+            response = model.generate_content([
+                "Balas sebagai Luffy!",
+                {"mime_type": "audio/wav", "data": audio_input['bytes']}
+            ])
+            
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": response.text
+            })
+            
+            st.rerun()
+        except Exception as e:
+            st.error(f"Eh?! Ada error: {str(e)}")
+
+# ===== HANDLE TEXT INPUT =====
+elif user_input:
+    with st.spinner("Shishishi... lagi mikir..."):
+        try:
+            st.session_state.messages.append({
+                "role": "user",
+                "content": user_input
+            })
+            
+            response = model.generate_content(user_input)
+            
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": response.text
+            })
+            
+            st.rerun()
+        except Exception as e:
+            st.error(f"Eh?! Ada error: {str(e)}")
+            st.session_state.messages.pop()
+
+# ===== FOOTER =====
 st.markdown("""
-<div style='text-align: center; margin-top: 30px; padding: 20px; color: rgba(200, 200, 200, 0.6); font-size: 12px;'>
+<div style='text-align: center; margin-top: 30px; padding: 20px; color: rgba(200, 200, 200, 0.6); font-size: 11px;'>
     Made with ❤️ for One Piece fans | Powered by Gemini API
 </div>
 """, unsafe_allow_html=True)
