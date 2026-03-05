@@ -1,29 +1,29 @@
 import streamlit as st
 import google.generativeai as genai
 from streamlit_mic_recorder import mic_recorder
-from datetime import datetime
 
 # ===== PAGE CONFIG =====
 st.set_page_config(
     page_title="🏴‍☠️ KAPTEN LUFFY - Nakama Chat",
     page_icon="🏴‍☠️",
-    layout="centered",
+    layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# ===== CUSTOM CSS - ANIME STYLE MAXIMAL =====
+# ===== CUSTOM CSS - FULLY RESPONSIVE =====
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Luckiest+Guy:wght@400&display=swap');
 
-html, body {
-    height: 100%;
-    overflow: hidden;
-}
-
 * {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100vh;
+    overflow: hidden !important;
 }
 
 /* MAIN BACKGROUND */
@@ -31,40 +31,24 @@ html, body {
     background: linear-gradient(135deg, #0f0f1e 0%, #1a0f2e 50%, #0f1a1a 100%) !important;
     background-attachment: fixed !important;
     height: 100vh !important;
+    width: 100vw !important;
     display: flex !important;
     flex-direction: column !important;
-    overflow: hidden !important;
+    padding: 0 !important;
+    gap: 0 !important;
 }
 
-[data-testid="stDecoration"] {
-    display: none !important;
-}
+[data-testid="stDecoration"] { display: none !important; }
+header { visibility: hidden !important; }
+footer { visibility: hidden !important; }
+.stDeployButton { display: none !important; }
+#MainMenu { visibility: hidden !important; }
 
-/* Remove default elements */
-header {
-    visibility: hidden !important;
-}
-
-footer {
-    visibility: hidden !important;
-}
-
-.stDeployButton {
-    display: none !important;
-}
-
-#MainMenu {
-    visibility: hidden !important;
-}
-
-/* Animated background blobs */
+/* Background effects */
 [data-testid="stAppViewContainer"]::before {
     content: '';
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0; width: 100%; height: 100%;
     background-image: 
         radial-gradient(circle at 20% 50%, rgba(239, 68, 68, 0.08) 0%, transparent 50%),
         radial-gradient(circle at 80% 80%, rgba(251, 191, 36, 0.05) 0%, transparent 50%),
@@ -73,93 +57,98 @@ footer {
     z-index: 0;
 }
 
-/* TITLE STYLING */
+[data-testid="stMain"] {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0 !important;
+    width: 100%;
+    gap: 0 !important;
+}
+
+.block-container {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+/* TITLE - RESPONSIVE */
 .title-container {
     text-align: center;
-    padding: 30px 20px;
+    padding: clamp(15px, 5vw, 25px);
     background: linear-gradient(90deg, rgba(120, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.3) 50%, rgba(120, 0, 0, 0.2) 100%);
     border-bottom: 2px solid rgba(239, 68, 68, 0.3);
-    border-radius: 0 0 20px 20px;
     backdrop-filter: blur(10px);
     box-shadow: 0 10px 30px rgba(239, 68, 68, 0.15);
-    margin-bottom: 20px;
     animation: slideDown 0.6s ease-out;
+    flex-shrink: 0;
+    width: 100%;
 }
 
 @keyframes slideDown {
-    from {
-        transform: translateY(-30px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
+    from { transform: translateY(-30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 
 .title-main {
     font-family: 'Luckiest Guy', cursive !important;
-    font-size: 52px !important;
+    font-size: clamp(28px, 8vw, 52px) !important;
     font-weight: 900 !important;
     letter-spacing: 2px !important;
     color: #fbbf24 !important;
-    text-shadow: 
-        3px 3px 0px #ef4444,
-        6px 6px 0px rgba(0, 0, 0, 0.5) !important;
+    text-shadow: 3px 3px 0px #ef4444, 6px 6px 0px rgba(0, 0, 0, 0.5) !important;
     margin: 0 !important;
     animation: glow 2s ease-in-out infinite;
 }
 
 @keyframes glow {
-    0%, 100% { 
-        text-shadow: 3px 3px 0px #ef4444, 6px 6px 0px rgba(0, 0, 0, 0.5), 0 0 20px rgba(239, 68, 68, 0.3); 
-    }
-    50% { 
-        text-shadow: 3px 3px 0px #f87171, 6px 6px 0px rgba(0, 0, 0, 0.5), 0 0 30px rgba(239, 68, 68, 0.5); 
-    }
+    0%, 100% { text-shadow: 3px 3px 0px #ef4444, 6px 6px 0px rgba(0, 0, 0, 0.5), 0 0 20px rgba(239, 68, 68, 0.3); }
+    50% { text-shadow: 3px 3px 0px #f87171, 6px 6px 0px rgba(0, 0, 0, 0.5), 0 0 30px rgba(239, 68, 68, 0.5); }
 }
 
 .title-subtitle {
     color: #fca5a5 !important;
-    font-size: 13px !important;
-    margin-top: 8px !important;
+    font-size: clamp(10px, 2.5vw, 13px) !important;
+    margin-top: clamp(3px, 1vw, 8px) !important;
     font-weight: 600 !important;
     letter-spacing: 1px !important;
 }
 
-/* CHAT MESSAGE STYLING */
+/* CHAT MESSAGES */
 [data-testid="stChatMessage"] {
     background: transparent !important;
     border: none !important;
     padding: 0 !important;
-    margin: 8px 0 !important;
+    margin: clamp(4px, 1vw, 8px) 0 !important;
+    width: 100% !important;
 }
 
 [data-testid="stChatMessageContent"] {
     border-radius: 20px !important;
-    padding: 12px 16px !important;
+    padding: clamp(8px, 2vw, 16px) !important;
     border: 1px solid !important;
     backdrop-filter: blur(10px) !important;
     box-shadow: 0 8px 20px !important;
     animation: slideIn 0.4s ease-out;
     word-wrap: break-word !important;
+    font-size: clamp(12px, 2.5vw, 16px) !important;
 }
 
 @keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-/* USER MESSAGE (Purple) */
+/* USER MESSAGE */
 [data-testid="stChatMessage"]:nth-of-type(odd) {
-    text-align: right !important;
-    margin-right: 0 !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    padding-right: clamp(5px, 3vw, 20px) !important;
 }
 
 [data-testid="stChatMessage"]:nth-of-type(odd) [data-testid="stChatMessageContent"] {
@@ -167,14 +156,14 @@ footer {
     border-color: rgba(168, 85, 247, 0.5) !important;
     box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3) !important;
     color: white !important;
-    display: inline-block !important;
-    max-width: 85% !important;
+    max-width: min(85%, 600px) !important;
 }
 
-/* ASSISTANT MESSAGE (Red/Orange) */
+/* ASSISTANT MESSAGE */
 [data-testid="stChatMessage"]:nth-of-type(even) {
-    text-align: left !important;
-    margin-left: 0 !important;
+    display: flex !important;
+    justify-content: flex-start !important;
+    padding-left: clamp(5px, 3vw, 20px) !important;
 }
 
 [data-testid="stChatMessage"]:nth-of-type(even) [data-testid="stChatMessageContent"] {
@@ -182,40 +171,59 @@ footer {
     border-color: rgba(239, 68, 68, 0.5) !important;
     box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3) !important;
     color: white !important;
-    display: inline-block !important;
-    max-width: 85% !important;
+    max-width: min(85%, 600px) !important;
 }
 
 /* CHAT CONTAINER */
 [data-testid="stChatMessageContainer"] {
     background: transparent !important;
-    position: relative;
+    position: relative !important;
+    flex: 1 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: clamp(10px, 3vw, 30px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
 }
 
-/* Add Luffy background image */
+/* Luffy background */
 [data-testid="stChatMessageContainer"]::after {
     content: '';
     position: absolute;
     bottom: 0;
     right: 0;
-    width: 350px;
-    height: 350px;
+    width: clamp(100px, 20vw, 350px);
+    height: clamp(100px, 20vw, 350px);
     background-image: url('https://pngall.com/wp-content/uploads/14/Luffy-Gear-5-PNG-Free-Download.png');
     background-size: contain;
     background-repeat: no-repeat;
     background-position: bottom right;
-    opacity: 0.12;
+    opacity: 0.1;
     pointer-events: none;
-    z-index: 0;
 }
 
-/* INPUT STYLING - HORIZONTAL LAYOUT */
+/* INPUT SECTION */
+.input-section {
+    flex-shrink: 0;
+    padding: clamp(10px, 2vw, 20px);
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.2));
+    border-top: 1px solid rgba(239, 68, 68, 0.2);
+    width: 100%;
+    gap: clamp(8px, 2vw, 12px) !important;
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: center !important;
+}
+
 .stChatInputContainer {
     background: transparent !important;
     border: none !important;
     padding: 0 !important;
     margin: 0 !important;
     width: 100% !important;
+    flex: 1 !important;
+    min-width: 200px !important;
 }
 
 .stChatInputContainer input {
@@ -223,11 +231,12 @@ footer {
     border: 2px solid rgba(239, 68, 68, 0.3) !important;
     border-radius: 25px !important;
     color: white !important;
-    padding: 12px 18px !important;
-    font-size: 15px !important;
+    padding: clamp(8px, 1.5vw, 12px) clamp(12px, 2vw, 18px) !important;
+    font-size: clamp(12px, 2vw, 15px) !important;
     transition: all 0.3s ease !important;
     backdrop-filter: blur(10px) !important;
     width: 100% !important;
+    height: 44px !important;
 }
 
 .stChatInputContainer input:focus {
@@ -240,36 +249,30 @@ footer {
     color: rgba(200, 200, 200, 0.6) !important;
 }
 
-/* COLUMNS LAYOUT */
+/* COLUMNS */
 [data-testid="stHorizontalBlock"] {
-    gap: 12px !important;
+    gap: clamp(8px, 2vw, 12px) !important;
     align-items: flex-end !important;
+    width: 100% !important;
 }
 
 [data-testid="stColumn"] {
     padding: 0 !important;
 }
 
-[data-testid="stColumn"]:first-child {
-    flex: 0 0 auto !important;
-    width: auto !important;
-}
-
-[data-testid="stColumn"]:last-child {
-    flex: 1 !important;
-}
-
-/* BUTTON STYLING */
+/* BUTTONS */
 button {
     background: linear-gradient(90deg, #ef4444, #f97316) !important;
     border: none !important;
-    border-radius: 20px !important;
+    border-radius: 25px !important;
     color: white !important;
     font-weight: 600 !important;
-    padding: 12px 16px !important;
+    padding: clamp(8px, 1.5vw, 12px) clamp(10px, 2vw, 16px) !important;
     transition: all 0.3s ease !important;
-    height: auto !important;
-    min-height: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    flex-shrink: 0 !important;
+    font-size: clamp(12px, 1.5vw, 14px) !important;
 }
 
 button:hover {
@@ -278,83 +281,57 @@ button:hover {
 }
 
 /* SCROLLBAR */
-::-webkit-scrollbar {
-    width: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
     background: linear-gradient(180deg, rgba(239, 68, 68, 0.4), rgba(251, 191, 36, 0.4));
     border-radius: 4px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(180deg, rgba(239, 68, 68, 0.6), rgba(251, 191, 36, 0.6));
 }
 
-/* RESPONSIVE */
+/* TABLET */
+@media (max-width: 1024px) {
+    [data-testid="stChatMessageContent"] {
+        max-width: 75% !important;
+    }
+}
+
+/* MOBILE */
 @media (max-width: 768px) {
-    .title-main {
-        font-size: 36px !important;
-    }
-
     [data-testid="stChatMessageContent"] {
-        max-width: 90% !important;
+        max-width: 85% !important;
     }
 
-    [data-testid="stChatMessageContainer"]::after {
-        width: 250px;
-        height: 250px;
+    .input-section {
+        gap: clamp(6px, 1.5vw, 10px) !important;
+    }
+
+    button {
+        height: 40px !important;
+        min-width: 40px !important;
     }
 }
 
+/* SMALL PHONE */
 @media (max-width: 480px) {
-    .title-container {
-        padding: 20px 15px;
-    }
-
     .title-main {
-        font-size: 28px !important;
+        text-shadow: 2px 2px 0px #ef4444, 4px 4px 0px rgba(0, 0, 0, 0.5) !important;
     }
 
     [data-testid="stChatMessageContent"] {
-        max-width: 95% !important;
-        padding: 10px 14px !important;
-        font-size: 14px !important;
+        max-width: 92% !important;
+        border-radius: 15px !important;
     }
 
-    [data-testid="stChatMessageContainer"]::after {
-        width: 200px;
-        height: 200px;
+    .input-section {
+        padding: clamp(8px, 1.5vw, 12px);
     }
-}
 
-/* LAYOUT WRAPPER */
-[data-testid="stVerticalBlockBorderWrapper"] {
-    flex: 1;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-}
-
-/* Main content area scrollable */
-.main {
-    flex: 1 !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-}
-
-/* Input section FIXED */
-.input-section {
-    flex-shrink: 0;
-    padding: 15px 20px 30px 20px;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0));
-    border-top: 1px solid rgba(239, 68, 68, 0.2);
-    position: sticky;
-    bottom: 0;
-    z-index: 100;
+    button {
+        padding: 8px 10px !important;
+    }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -368,7 +345,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ===== API CONFIGURATION =====
-API_KEY = st.secrets.get("GEMINI_API_KEY", "AIzaSyC9YzN9A8fMoEhnx1wdrfdSf2JWozvv_9U")
+API_KEY = "AIzaSyC9YzN9A8fMoEhnx1wdrfdSf2JWozvv_9U"
 genai.configure(api_key=API_KEY)
 
 SYSTEM_INSTRUCTION = (
@@ -394,13 +371,10 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(f"**{message['content']}**")
 
-# ===== SPACER UNTUK LAYOUT =====
-st.write("")
-
-# ===== INPUT SECTION - FIXED BOTTOM =====
+# ===== INPUT SECTION =====
 st.markdown('<div class="input-section">', unsafe_allow_html=True)
 
-col_mic, col_input, col_btn = st.columns([0.8, 1, 0.8], gap="small")
+col_mic, col_input = st.columns([1, 4], gap="small")
 
 with col_mic:
     audio_input = mic_recorder(
